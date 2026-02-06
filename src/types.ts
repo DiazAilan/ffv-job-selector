@@ -16,6 +16,6 @@ export type CharacterId = (typeof CHARACTER_IDS)[number]
 export const CHARACTER_NAMES: Record<CharacterId, string> = {
   bartz: 'Bartz',
   lenna: 'Lenna',
-  galufKrile: 'Galuf / Krile',
+  galufKrile: 'Galuf',
   faris: 'Faris',
 }

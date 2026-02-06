@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import './App.scss'
 import {
   WIND_JOBS,
-  NON_WIND_JOBS,
+  ALL_JOBS,
   findJobById,
 } from './data/jobs'
 import {
@@ -68,6 +68,20 @@ function App() {
     saveToStorage(selections)
   }, [selections])
 
+  // Clear invalid state: otherJob cannot equal windJob for the same character
+  useEffect(() => {
+    let hasInvalid = false
+    const fixed = { ...selections }
+    for (const charId of CHARACTER_IDS) {
+      const s = fixed[charId]
+      if (s.windJob && s.otherJob && s.windJob === s.otherJob) {
+        fixed[charId] = { ...s, otherJob: null }
+        hasInvalid = true
+      }
+    }
+    if (hasInvalid) setSelections(fixed)
+  }, [selections])
+
   const usedJobIds = getUsedJobIds(selections)
 
   const setJob = (charId: CharacterId, slot: 'windJob' | 'otherJob', jobId: string | null) => {
@@ -80,37 +94,47 @@ function App() {
     }))
   }
 
-  const availableWindJobs = WIND_JOBS.filter((j) => !usedJobIds.has(j.id))
-  const availableOtherJobs = NON_WIND_JOBS.filter((j) => !usedJobIds.has(j.id))
-
-  const handleRandomWindJob = () => {
-    const firstEmpty = CHARACTER_IDS.find((id) => !selections[id].windJob)
-    if (!firstEmpty || availableWindJobs.length === 0) return
-    const job = pickRandom(availableWindJobs)
-    setJob(firstEmpty, 'windJob', job.id)
-  }
-
-  const handleRandomJob = () => {
-    const firstEmpty = CHARACTER_IDS.find((id) => !selections[id].otherJob)
-    if (!firstEmpty || availableOtherJobs.length === 0) return
-    const job = pickRandom(availableOtherJobs)
-    setJob(firstEmpty, 'otherJob', job.id)
-  }
-
   const getJobOptions = (slot: 'windJob' | 'otherJob', excludeCharId?: CharacterId) => {
     const used = new Set(usedJobIds)
     if (excludeCharId) {
       const s = selections[excludeCharId]
-      if (s.windJob) used.delete(s.windJob)
-      if (s.otherJob) used.delete(s.otherJob)
+      if (slot === 'windJob') {
+        if (s.windJob) used.delete(s.windJob)
+        if (s.otherJob) used.delete(s.otherJob)
+      } else {
+        // For otherJob: only exclude otherJob so user can change it.
+        // Keep windJob in used so the same job can't be picked twice for one character.
+        if (s.otherJob) used.delete(s.otherJob)
+      }
     }
     if (slot === 'windJob') {
       return WIND_JOBS.filter((j) => !used.has(j.id))
     }
-    return NON_WIND_JOBS.filter((j) => !used.has(j.id))
+    return ALL_JOBS.filter((j) => !used.has(j.id))
   }
 
   const clearAll = () => setSelections(initialSelections)
+
+  const clearCharacter = (charId: CharacterId) => {
+    setSelections((prev) => ({
+      ...prev,
+      [charId]: emptySelection(),
+    }))
+  }
+
+  const pickedJobs = CHARACTER_IDS.flatMap((charId) => {
+    const s = selections[charId]
+    const jobs: { id: string; name: string }[] = []
+    if (s.windJob) {
+      const j = findJobById(s.windJob)
+      if (j) jobs.push(j)
+    }
+    if (s.otherJob) {
+      const j = findJobById(s.otherJob)
+      if (j) jobs.push(j)
+    }
+    return jobs
+  })
 
   return (
     <div className="app">
@@ -119,27 +143,9 @@ function App() {
         <p className="subtitle">
           Pick 2 jobs per character (1 Wind + 1 other). No repeats.
         </p>
-        <div className="random-buttons">
-          <button
-            type="button"
-            onClick={handleRandomWindJob}
-            disabled={availableWindJobs.length === 0}
-            title="Fill first empty Wind slot with a random unused Wind job"
-          >
-            Random Wind Job
-          </button>
-          <button
-            type="button"
-            onClick={handleRandomJob}
-            disabled={availableOtherJobs.length === 0}
-            title="Fill first empty slot with a random unused job"
-          >
-            Random Job
-          </button>
-          <button type="button" onClick={clearAll} className="clear-btn">
-            Clear All
-          </button>
-        </div>
+        <button type="button" onClick={clearAll} className="clear-btn">
+          Clear All
+        </button>
       </header>
 
       <main className="characters-grid">
@@ -152,7 +158,17 @@ function App() {
 
           return (
             <section key={charId} className="character-card">
-              <h2>{CHARACTER_NAMES[charId]}</h2>
+              <div className="character-header">
+                <h2>{CHARACTER_NAMES[charId]}</h2>
+                <button
+                  type="button"
+                  onClick={() => clearCharacter(charId)}
+                  className="clear-char-btn"
+                  title={`Clear ${CHARACTER_NAMES[charId]}`}
+                >
+                  Clear
+                </button>
+              </div>
               <div className="slots">
                 <div className="slot">
                   <label>Wind (required)</label>
@@ -187,6 +203,30 @@ function App() {
                   </select>
                 </div>
               </div>
+              <div className="random-buttons">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (windOptions.length > 0) {
+                      setJob(charId, 'windJob', pickRandom(windOptions).id)
+                    }
+                  }}
+                  title="Pick a random unused Wind job"
+                >
+                  Random Wind
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (otherOptions.length > 0) {
+                      setJob(charId, 'otherJob', pickRandom(otherOptions).id)
+                    }
+                  }}
+                  title="Pick a random unused job"
+                >
+                  Random Job
+                </button>
+              </div>
               {(windJob || otherJob) && (
                 <div className="selected-summary">
                   {windJob && <span className="job-tag wind">{windJob.name}</span>}
@@ -199,6 +239,17 @@ function App() {
           )
         })}
       </main>
+
+      {pickedJobs.length > 0 && (
+        <section className="picked-jobs">
+          <h3>Picked jobs</h3>
+          <ul>
+            {pickedJobs.map((j) => (
+              <li key={j.id}>{j.name}</li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   )
 }

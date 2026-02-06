@@ -1,4 +1,4 @@
-export type Crystal = 'wind' | 'water' | 'fire' | 'earth' | 'advance'
+export type Crystal = 'wind' | 'water' | 'fire' | 'earth'
 
 export interface Job {
   id: string
@@ -31,10 +31,6 @@ export const NON_WIND_JOBS: Job[] = [
   { id: 'dancer', name: 'Dancer', crystal: 'earth' },
   { id: 'samurai', name: 'Samurai', crystal: 'earth' },
   { id: 'chemist', name: 'Chemist', crystal: 'earth' },
-  { id: 'necromancer', name: 'Necromancer', crystal: 'advance' },
-  { id: 'cannoneer', name: 'Cannoneer', crystal: 'advance' },
-  { id: 'gladiator', name: 'Gladiator', crystal: 'advance' },
-  { id: 'oracle', name: 'Oracle', crystal: 'advance' },
 ]
 
 export const ALL_JOBS: Job[] = [...WIND_JOBS, ...NON_WIND_JOBS]

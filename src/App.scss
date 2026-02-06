@@ -23,16 +23,114 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
+  .clear-btn {
+    padding: 0.5rem 1rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.08);
+    color: rgba(255, 255, 255, 0.6);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.15);
+      border-color: rgba(232, 212, 160, 0.4);
+    }
+  }
+}
+
+.characters-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 1.25rem;
+  max-width: 1100px;
+  margin: 0 auto 2rem;
+}
+
+.picked-jobs {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 1.25rem;
+  background: rgba(0, 0, 0, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+
+  h3 {
+    margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.8);
+  }
+
+  ul {
+    margin: 0;
+    padding: 0 0 0 1.25rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.5rem;
+
+    li {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.85);
+    }
+  }
+}
+
+.character-card {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 10px;
+  padding: 1.25rem;
+  transition: border-color 0.2s;
+
+  &:hover {
+    border-color: rgba(232, 212, 160, 0.25);
+  }
+
+  .character-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+
+    h2 {
+      margin: 0;
+      font-size: 1rem;
+      font-weight: 600;
+      color: #fff;
+    }
+
+    .clear-char-btn {
+      padding: 0.25rem 0.5rem;
+      font-size: 0.75rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.12);
+        border-color: rgba(255, 255, 255, 0.3);
+      }
+    }
+  }
+
   .random-buttons {
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem;
-    justify-content: center;
-    align-items: center;
+    margin-top: 1rem;
 
     button {
-      padding: 0.5rem 1rem;
-      font-size: 0.875rem;
+      padding: 0.4rem 0.75rem;
+      font-size: 0.8rem;
       font-weight: 600;
       border: 1px solid rgba(255, 255, 255, 0.2);
       border-radius: 6px;
@@ -50,41 +148,7 @@
         opacity: 0.5;
         cursor: not-allowed;
       }
-
-      &.clear-btn {
-        color: rgba(255, 255, 255, 0.6);
-        margin-left: 0.5rem;
-      }
     }
-  }
-}
-
-.characters-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 1.25rem;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.character-card {
-  background: rgba(0, 0, 0, 0.35);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 10px;
-  padding: 1.25rem;
-  transition: border-color 0.2s;
-
-  &:hover {
-    border-color: rgba(232, 212, 160, 0.25);
-  }
-
-  h2 {
-    margin: 0 0 1rem;
-    font-size: 1rem;
-    font-weight: 600;
-    color: #fff;
-    padding-bottom: 0.5rem;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .slots {
