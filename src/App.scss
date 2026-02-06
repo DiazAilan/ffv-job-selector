@@ -23,20 +23,44 @@
     color: rgba(255, 255, 255, 0.7);
   }
 
-  .clear-btn {
-    padding: 0.5rem 1rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    border-radius: 6px;
-    background: rgba(255, 255, 255, 0.08);
-    color: rgba(255, 255, 255, 0.6);
-    cursor: pointer;
-    transition: background 0.2s, border-color 0.2s;
+  .header-buttons {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+    align-items: center;
 
-    &:hover {
-      background: rgba(255, 255, 255, 0.15);
-      border-color: rgba(232, 212, 160, 0.4);
+    .random-all-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid rgba(232, 212, 160, 0.4);
+      border-radius: 6px;
+      background: rgba(232, 212, 160, 0.15);
+      color: #e8d4a0;
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+
+      &:hover {
+        background: rgba(232, 212, 160, 0.25);
+        border-color: rgba(232, 212, 160, 0.6);
+      }
+    }
+
+    .clear-btn {
+      padding: 0.5rem 1rem;
+      font-size: 0.875rem;
+      font-weight: 600;
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.08);
+      color: rgba(255, 255, 255, 0.6);
+      cursor: pointer;
+      transition: background 0.2s, border-color 0.2s;
+
+      &:hover {
+        background: rgba(255, 255, 255, 0.15);
+        border-color: rgba(232, 212, 160, 0.4);
+      }
     }
   }
 }
@@ -66,15 +90,11 @@
 
   ul {
     margin: 0;
-    padding: 0 0 0 1.25rem;
+    padding: 0;
+    list-style: none;
     display: flex;
     flex-wrap: wrap;
-    gap: 0.5rem 1.5rem;
-
-    li {
-      font-size: 0.9rem;
-      color: rgba(255, 255, 255, 0.85);
-    }
+    gap: 0.5rem;
   }
 }
 
@@ -196,22 +216,15 @@
     margin-top: 1rem;
     padding-top: 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
-
-    .job-tag {
-      font-size: 0.75rem;
-      padding: 0.2rem 0.5rem;
-      border-radius: 4px;
-      font-weight: 500;
-
-      &.wind {
-        background: rgba(100, 180, 255, 0.2);
-        color: #7ec8ff;
-      }
-
-      &.other {
-        background: rgba(180, 140, 255, 0.2);
-        color: #b89cff;
-      }
-    }
   }
+}
+
+.job-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  padding: 0.2rem 0.5rem;
+  border-radius: 4px;
+  font-weight: 500;
 }

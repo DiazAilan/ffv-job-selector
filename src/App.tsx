@@ -61,6 +61,15 @@ function pickRandom<T>(arr: T[]): T {
   return arr[Math.floor(Math.random() * arr.length)]
 }
 
+function shuffle<T>(arr: T[]): T[] {
+  const out = [...arr]
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]]
+  }
+  return out
+}
+
 function App() {
   const [selections, setSelections] = useState<SavedSelections>(loadFromStorage)
 
@@ -68,14 +77,19 @@ function App() {
     saveToStorage(selections)
   }, [selections])
 
-  // Clear invalid state: otherJob cannot equal windJob for the same character
+  // Clear invalid state: otherJob cannot equal windJob; remove jobs that no longer exist (e.g. Mime)
   useEffect(() => {
     let hasInvalid = false
     const fixed = { ...selections }
     for (const charId of CHARACTER_IDS) {
       const s = fixed[charId]
-      if (s.windJob && s.otherJob && s.windJob === s.otherJob) {
-        fixed[charId] = { ...s, otherJob: null }
+      let wind = s.windJob
+      let other = s.otherJob
+      if (wind && !findJobById(wind)) wind = null
+      if (other && !findJobById(other)) other = null
+      if (wind && other && wind === other) other = null
+      if (wind !== s.windJob || other !== s.otherJob) {
+        fixed[charId] = { windJob: wind, otherJob: other }
         hasInvalid = true
       }
     }
@@ -115,6 +129,21 @@ function App() {
 
   const clearAll = () => setSelections(initialSelections)
 
+  const handleRandomAll = () => {
+    const windShuffled = shuffle(WIND_JOBS)
+    const windPicks = windShuffled.slice(0, 4)
+    const usedIds = new Set(windPicks.map((j) => j.id))
+    const otherPool = ALL_JOBS.filter((j) => !usedIds.has(j.id))
+    const otherShuffled = shuffle(otherPool)
+    const otherPicks = otherShuffled.slice(0, 4)
+    setSelections({
+      bartz: { windJob: windPicks[0].id, otherJob: otherPicks[0].id },
+      lenna: { windJob: windPicks[1].id, otherJob: otherPicks[1].id },
+      galufKrile: { windJob: windPicks[2].id, otherJob: otherPicks[2].id },
+      faris: { windJob: windPicks[3].id, otherJob: otherPicks[3].id },
+    })
+  }
+
   const clearCharacter = (charId: CharacterId) => {
     setSelections((prev) => ({
       ...prev,
@@ -124,7 +153,7 @@ function App() {
 
   const pickedJobs = CHARACTER_IDS.flatMap((charId) => {
     const s = selections[charId]
-    const jobs: { id: string; name: string }[] = []
+    const jobs = []
     if (s.windJob) {
       const j = findJobById(s.windJob)
       if (j) jobs.push(j)
@@ -143,9 +172,14 @@ function App() {
         <p className="subtitle">
           Pick 2 jobs per character (1 Wind + 1 other). No repeats.
         </p>
-        <button type="button" onClick={clearAll} className="clear-btn">
-          Clear All
-        </button>
+        <div className="header-buttons">
+          <button type="button" onClick={handleRandomAll} className="random-all-btn">
+            Random All
+          </button>
+          <button type="button" onClick={clearAll} className="clear-btn">
+            Clear All
+          </button>
+        </div>
       </header>
 
       <main className="characters-grid">
@@ -181,7 +215,7 @@ function App() {
                     <option value="">— Select —</option>
                     {windOptions.map((j) => (
                       <option key={j.id} value={j.id}>
-                        {j.name}
+                        {j.emoji} {j.name}
                       </option>
                     ))}
                   </select>
@@ -197,7 +231,7 @@ function App() {
                     <option value="">— Select —</option>
                     {otherOptions.map((j) => (
                       <option key={j.id} value={j.id}>
-                        {j.name}
+                        {j.emoji} {j.name}
                       </option>
                     ))}
                   </select>
@@ -229,9 +263,27 @@ function App() {
               </div>
               {(windJob || otherJob) && (
                 <div className="selected-summary">
-                  {windJob && <span className="job-tag wind">{windJob.name}</span>}
+                  {windJob && (
+                    <span
+                      className="job-tag"
+                      style={{
+                        background: `${windJob.color}33`,
+                        color: windJob.color,
+                      }}
+                    >
+                      {windJob.emoji} {windJob.name}
+                    </span>
+                  )}
                   {otherJob && (
-                    <span className="job-tag other">{otherJob.name}</span>
+                    <span
+                      className="job-tag"
+                      style={{
+                        background: `${otherJob.color}33`,
+                        color: otherJob.color,
+                      }}
+                    >
+                      {otherJob.emoji} {otherJob.name}
+                    </span>
                   )}
                 </div>
               )}
@@ -245,7 +297,16 @@ function App() {
           <h3>Picked jobs</h3>
           <ul>
             {pickedJobs.map((j) => (
-              <li key={j.id}>{j.name}</li>
+              <li
+                key={j.id}
+                className="job-tag"
+                style={{
+                  background: `${j.color}33`,
+                  color: j.color,
+                }}
+              >
+                {j.emoji} {j.name}
+              </li>
             ))}
           </ul>
         </section>
