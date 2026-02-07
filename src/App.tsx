@@ -5,7 +5,7 @@ import {
   ALL_JOBS,
   findJobById,
 } from './data/jobs'
-import { getJobComboTitle } from './data/jobCombos'
+import { getJobCombo } from './data/jobCombos'
 import { mixHexColors } from './utils/color'
 import {
   type SavedSelections,
@@ -263,6 +263,7 @@ function App() {
           const otherOptions = getJobOptions('otherJob', charId)
           const windJob = s.windJob ? findJobById(s.windJob) : null
           const otherJob = s.otherJob ? findJobById(s.otherJob) : null
+          const combo = s.windJob && s.otherJob ? getJobCombo(s.windJob, s.otherJob) : null
 
           return (
             <section key={charId} className="character-card">
@@ -277,14 +278,14 @@ function App() {
                   Clear
                 </button>
               </div>
-              {s.windJob && s.otherJob && windJob && otherJob && getJobComboTitle(s.windJob, s.otherJob) && (
+              {combo && windJob && otherJob && (
                 <p
                   className="combo-title"
                   style={{
                     color: mixHexColors(windJob.color, otherJob.color),
                   }}
                 >
-                  {getJobComboTitle(s.windJob, s.otherJob)}
+                  {combo.emoji} {combo.title}
                 </p>
               )}
               <div className="slots">
