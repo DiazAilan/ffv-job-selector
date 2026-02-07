@@ -144,7 +144,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
     padding-bottom: 0.5rem;
     border-bottom: 1px solid rgba(255, 255, 255, 0.1);
 
@@ -171,6 +171,14 @@
         border-color: rgba(255, 255, 255, 0.3);
       }
     }
+  }
+
+  .combo-title {
+    margin: 0 0 0.75rem;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: #e8d4a0;
+    font-style: italic;
   }
 
   .random-buttons {

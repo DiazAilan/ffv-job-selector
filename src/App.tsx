@@ -5,6 +5,7 @@ import {
   ALL_JOBS,
   findJobById,
 } from './data/jobs'
+import { getJobComboTitle } from './data/jobCombos'
 import {
   type SavedSelections,
   type SaveSlot,
@@ -275,6 +276,9 @@ function App() {
                   Clear
                 </button>
               </div>
+              {s.windJob && s.otherJob && getJobComboTitle(s.windJob, s.otherJob) && (
+                <p className="combo-title">{getJobComboTitle(s.windJob, s.otherJob)}</p>
+              )}
               <div className="slots">
                 <div className="slot">
                   <label>Wind (required)</label>
