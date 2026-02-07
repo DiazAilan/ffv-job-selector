@@ -7,6 +7,7 @@ import {
 } from './data/jobs'
 import { getJobCombo } from './data/jobCombos'
 import { getMasteryStats } from './data/jobStats'
+import { getCombinedPassives } from './data/jobPassives'
 import { mixHexColors } from './utils/color'
 import {
   type SavedSelections,
@@ -113,10 +114,23 @@ const NUM_SLOTS = 5
 function App() {
   const [state, setState] = useState(() => {
     const loaded = loadSlotsFromStorage()
-    return { slots: loaded.slots, activeSlotIndex: loaded.activeSlotIndex }
+    return {
+      slots: loaded.slots,
+      activeSlotIndex: loaded.activeSlotIndex,
+      statsAndPassivesOpen: new Set<CharacterId>(),
+    }
   })
 
-  const { slots, activeSlotIndex } = state
+  const { slots, activeSlotIndex, statsAndPassivesOpen } = state
+
+  const toggleStatsAndPassives = (charId: CharacterId) => {
+    setState((prev) => {
+      const next = new Set(prev.statsAndPassivesOpen)
+      if (next.has(charId)) next.delete(charId)
+      else next.add(charId)
+      return { ...prev, statsAndPassivesOpen: next }
+    })
+  }
   const selections = slots[activeSlotIndex]?.selections ?? initialSelections
 
   useEffect(() => {
@@ -266,32 +280,47 @@ function App() {
           const otherJob = s.otherJob ? findJobById(s.otherJob) : null
           const combo = s.windJob && s.otherJob ? getJobCombo(s.windJob, s.otherJob) : null
 
+          const showStatsAndPassives = statsAndPassivesOpen.has(charId)
+          const canToggleStats = !!combo && !!windJob && !!otherJob
+
           return (
             <section key={charId} className="character-card">
               <div className="character-header">
                 <h2>{CHARACTER_NAMES[charId]}</h2>
-                <button
-                  type="button"
-                  onClick={() => clearCharacter(charId)}
-                  className="clear-char-btn"
-                  title={`Clear ${CHARACTER_NAMES[charId]}`}
-                >
-                  Clear
-                </button>
+                <div className="header-actions">
+                  {canToggleStats && (
+                    <button
+                      type="button"
+                      onClick={() => toggleStatsAndPassives(charId)}
+                      className="toggle-stats-btn"
+                      title={showStatsAndPassives ? 'Back to jobs' : 'Info'}
+                    >
+                      {showStatsAndPassives ? 'Jobs' : 'Info'}
+                    </button>
+                  )}
+                  <button
+                    type="button"
+                    onClick={() => clearCharacter(charId)}
+                    className="clear-char-btn"
+                    title={`Clear ${CHARACTER_NAMES[charId]}`}
+                  >
+                    Clear
+                  </button>
+                </div>
               </div>
-              {combo && windJob && otherJob && (
-                <>
+              {showStatsAndPassives && canToggleStats ? (
+                <div className="stats-passives-view">
                   <p
                     className="combo-title"
                     style={{
-                      color: mixHexColors(windJob.color, otherJob.color),
+                      color: mixHexColors(windJob!.color, otherJob!.color),
                     }}
                   >
-                    {combo.emoji} {combo.title}
+                    {combo!.emoji} {combo!.title}
                   </p>
                   <div className="mastery-stats">
-                    <span className="mastery-label">Mastery bonus:</span>
-                    {Object.entries(getMasteryStats(windJob.id, otherJob.id)).map(
+                    <span className="mastery-label">Mastery bonus</span>
+                    {Object.entries(getMasteryStats(windJob!.id, otherJob!.id)).map(
                       ([stat, val]) => (
                         <span key={stat} className="stat">
                           {stat.toUpperCase()} {val >= 0 ? '+' : ''}{val}
@@ -299,9 +328,40 @@ function App() {
                       )
                     )}
                   </div>
-                </>
-              )}
-              <div className="slots">
+                  {(() => {
+                    const passives = getCombinedPassives(windJob!.id, otherJob!.id)
+                    if (passives.length === 0) return null
+                    return (
+                      <div className="passives-section">
+                        <span className="passives-label">Passives</span>
+                        <ul className="passives-list">
+                          {passives.map((p) => (
+                            <li
+                              key={p.id}
+                              className="passive-item"
+                              data-tooltip={p.description}
+                            >
+                              {p.name}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )
+                  })()}
+                </div>
+              ) : (
+                <>
+                  {combo && windJob && otherJob && (
+                    <p
+                      className="combo-title"
+                      style={{
+                        color: mixHexColors(windJob.color, otherJob.color),
+                      }}
+                    >
+                      {combo.emoji} {combo.title}
+                    </p>
+                  )}
+                  <div className="slots">
                 <div className="slot">
                   <label>Wind (required)</label>
                   <select
@@ -384,6 +444,8 @@ function App() {
                     </span>
                   )}
                 </div>
+              )}
+                </>
               )}
             </section>
           )
