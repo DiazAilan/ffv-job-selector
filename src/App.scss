@@ -65,6 +65,37 @@
   }
 }
 
+.save-slots {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 1.5rem;
+
+  .slot-btn {
+    padding: 0.4rem 0.9rem;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 0.06);
+    color: rgba(255, 255, 255, 0.7);
+    cursor: pointer;
+    transition: background 0.2s, border-color 0.2s;
+
+    &:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.3);
+    }
+
+    &.active {
+      background: rgba(232, 212, 160, 0.2);
+      border-color: rgba(232, 212, 160, 0.5);
+      color: #e8d4a0;
+    }
+  }
+}
+
 .characters-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));

@@ -7,12 +7,14 @@ import {
 } from './data/jobs'
 import {
   type SavedSelections,
+  type SaveSlot,
   type CharacterId,
   CHARACTER_IDS,
   CHARACTER_NAMES,
 } from './types'
 
 const STORAGE_KEY = 'ffv-job-selections'
+const SLOTS_KEY = 'ffv-job-slots'
 
 const emptySelection = () => ({
   windJob: null,
@@ -26,22 +28,55 @@ const initialSelections: SavedSelections = {
   faris: emptySelection(),
 }
 
-function loadFromStorage(): SavedSelections {
+function createEmptySlot(index: number): SaveSlot {
+  return {
+    name: `Slot ${index + 1}`,
+    selections: JSON.parse(JSON.stringify(initialSelections)),
+  }
+}
+
+const DEFAULT_SLOTS: SaveSlot[] = [
+  createEmptySlot(0),
+  createEmptySlot(1),
+  createEmptySlot(2),
+  createEmptySlot(3),
+  createEmptySlot(4),
+]
+
+function loadSlotsFromStorage(): { slots: SaveSlot[]; activeSlotIndex: number } {
   try {
-    const stored = localStorage.getItem(STORAGE_KEY)
+    const stored = localStorage.getItem(SLOTS_KEY)
     if (stored) {
-      const parsed = JSON.parse(stored) as SavedSelections
-      return { ...initialSelections, ...parsed }
+      const parsed = JSON.parse(stored) as { slots: SaveSlot[]; activeSlotIndex: number }
+      if (parsed.slots?.length >= 5) {
+        return {
+          slots: parsed.slots.map((s, i) => ({
+            name: s.name || `Slot ${i + 1}`,
+            selections: { ...initialSelections, ...s.selections },
+          })),
+          activeSlotIndex: Math.min(parsed.activeSlotIndex ?? 0, 4),
+        }
+      }
+    }
+    // Migrate from old single-slot format
+    const oldStored = localStorage.getItem(STORAGE_KEY)
+    if (oldStored) {
+      const parsed = JSON.parse(oldStored) as SavedSelections
+      const migrated: SaveSlot[] = [
+        { name: 'Slot 1', selections: { ...initialSelections, ...parsed } },
+        ...DEFAULT_SLOTS.slice(1),
+      ]
+      return { slots: migrated, activeSlotIndex: 0 }
     }
   } catch {
     // ignore
   }
-  return initialSelections
+  return { slots: JSON.parse(JSON.stringify(DEFAULT_SLOTS)), activeSlotIndex: 0 }
 }
 
-function saveToStorage(selections: SavedSelections) {
+function saveSlotsToStorage(slots: SaveSlot[], activeSlotIndex: number) {
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(selections))
+    localStorage.setItem(SLOTS_KEY, JSON.stringify({ slots, activeSlotIndex }))
   } catch {
     // ignore
   }
@@ -70,12 +105,35 @@ function shuffle<T>(arr: T[]): T[] {
   return out
 }
 
+const NUM_SLOTS = 5
+
 function App() {
-  const [selections, setSelections] = useState<SavedSelections>(loadFromStorage)
+  const [state, setState] = useState(() => {
+    const loaded = loadSlotsFromStorage()
+    return { slots: loaded.slots, activeSlotIndex: loaded.activeSlotIndex }
+  })
+
+  const { slots, activeSlotIndex } = state
+  const selections = slots[activeSlotIndex]?.selections ?? initialSelections
 
   useEffect(() => {
-    saveToStorage(selections)
-  }, [selections])
+    saveSlotsToStorage(slots, activeSlotIndex)
+  }, [slots, activeSlotIndex])
+
+  const updateActiveSlotSelections = (updater: (prev: SavedSelections) => SavedSelections) => {
+    setState((prev) => {
+      const newSlots = [...prev.slots]
+      newSlots[prev.activeSlotIndex] = {
+        ...newSlots[prev.activeSlotIndex],
+        selections: updater(newSlots[prev.activeSlotIndex].selections),
+      }
+      return { ...prev, slots: newSlots }
+    })
+  }
+
+  const switchSlot = (index: number) => {
+    setState((prev) => ({ ...prev, activeSlotIndex: index }))
+  }
 
   // Clear invalid state: otherJob cannot equal windJob; remove jobs that no longer exist (e.g. Mime)
   useEffect(() => {
@@ -93,13 +151,13 @@ function App() {
         hasInvalid = true
       }
     }
-    if (hasInvalid) setSelections(fixed)
+    if (hasInvalid) updateActiveSlotSelections(() => fixed)
   }, [selections])
 
   const usedJobIds = getUsedJobIds(selections)
 
   const setJob = (charId: CharacterId, slot: 'windJob' | 'otherJob', jobId: string | null) => {
-    setSelections((prev) => ({
+    updateActiveSlotSelections((prev) => ({
       ...prev,
       [charId]: {
         ...prev[charId],
@@ -127,7 +185,7 @@ function App() {
     return ALL_JOBS.filter((j) => !used.has(j.id))
   }
 
-  const clearAll = () => setSelections(initialSelections)
+  const clearAll = () => updateActiveSlotSelections(() => JSON.parse(JSON.stringify(initialSelections)))
 
   const handleRandomAll = () => {
     const windShuffled = shuffle(WIND_JOBS)
@@ -136,16 +194,16 @@ function App() {
     const otherPool = ALL_JOBS.filter((j) => !usedIds.has(j.id))
     const otherShuffled = shuffle(otherPool)
     const otherPicks = otherShuffled.slice(0, 4)
-    setSelections({
+    updateActiveSlotSelections(() => ({
       bartz: { windJob: windPicks[0].id, otherJob: otherPicks[0].id },
       lenna: { windJob: windPicks[1].id, otherJob: otherPicks[1].id },
       galufKrile: { windJob: windPicks[2].id, otherJob: otherPicks[2].id },
       faris: { windJob: windPicks[3].id, otherJob: otherPicks[3].id },
-    })
+    }))
   }
 
   const clearCharacter = (charId: CharacterId) => {
-    setSelections((prev) => ({
+    updateActiveSlotSelections((prev) => ({
       ...prev,
       [charId]: emptySelection(),
     }))
@@ -181,6 +239,20 @@ function App() {
           </button>
         </div>
       </header>
+
+      <section className="save-slots">
+        {Array.from({ length: NUM_SLOTS }, (_, i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => switchSlot(i)}
+            className={`slot-btn ${i === activeSlotIndex ? 'active' : ''}`}
+            title={slots[i]?.name}
+          >
+            {slots[i]?.name ?? `Slot ${i + 1}`}
+          </button>
+        ))}
+      </section>
 
       <main className="characters-grid">
         {CHARACTER_IDS.map((charId) => {

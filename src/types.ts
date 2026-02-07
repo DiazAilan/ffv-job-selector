@@ -10,6 +10,11 @@ export interface SavedSelections {
   faris: CharacterSelection
 }
 
+export interface SaveSlot {
+  name: string
+  selections: SavedSelections
+}
+
 export const CHARACTER_IDS = ['bartz', 'lenna', 'galufKrile', 'faris'] as const
 export type CharacterId = (typeof CHARACTER_IDS)[number]
 
