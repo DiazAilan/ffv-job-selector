@@ -42,6 +42,7 @@ export const JOB_PASSIVES: Record<string, Passive[]> = {
   ],
   ninja: [
     { id: 'first-strike', name: 'First Strike', description: 'Increase the chances of having the first attack.' },
+    { id: 'dual-wield', name: 'Dual-Wield', description: 'Carry and attack with a weapon in each hand. Bows and harps cannot be dual-wielded.' },
   ],
   ranger: [],
   bard: [],

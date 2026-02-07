@@ -8,6 +8,7 @@ import {
 import { getJobCombo } from './data/jobCombos'
 import { getMasteryStats } from './data/jobStats'
 import { getCombinedPassives } from './data/jobPassives'
+import { getCombinedSlotAbilities } from './data/jobSlotAbilities'
 import { mixHexColors } from './utils/color'
 import {
   type SavedSelections,
@@ -23,6 +24,8 @@ const SLOTS_KEY = 'ffv-job-slots'
 const emptySelection = () => ({
   windJob: null,
   otherJob: null,
+  slotAbility1: null,
+  slotAbility2: null,
 })
 
 const initialSelections: SavedSelections = {
@@ -56,7 +59,7 @@ function loadSlotsFromStorage(): { slots: SaveSlot[]; activeSlotIndex: number } 
         return {
           slots: parsed.slots.map((s, i) => ({
             name: s.name || `Slot ${i + 1}`,
-            selections: { ...initialSelections, ...s.selections },
+            selections: migrateSelections(s.selections),
           })),
           activeSlotIndex: Math.min(parsed.activeSlotIndex ?? 0, 4),
         }
@@ -67,7 +70,7 @@ function loadSlotsFromStorage(): { slots: SaveSlot[]; activeSlotIndex: number } 
     if (oldStored) {
       const parsed = JSON.parse(oldStored) as SavedSelections
       const migrated: SaveSlot[] = [
-        { name: 'Slot 1', selections: { ...initialSelections, ...parsed } },
+        { name: 'Slot 1', selections: migrateSelections(parsed) },
         ...DEFAULT_SLOTS.slice(1),
       ]
       return { slots: migrated, activeSlotIndex: 0 }
@@ -84,6 +87,18 @@ function saveSlotsToStorage(slots: SaveSlot[], activeSlotIndex: number) {
   } catch {
     // ignore
   }
+}
+
+function migrateSelections(selections: Partial<SavedSelections> | null): SavedSelections {
+  const result = JSON.parse(JSON.stringify(initialSelections)) as SavedSelections
+  if (!selections) return result
+  for (const charId of CHARACTER_IDS) {
+    const src = selections[charId]
+    if (src) {
+      result[charId] = { ...emptySelection(), ...src }
+    }
+  }
+  return result
 }
 
 function getUsedJobIds(selections: SavedSelections): Set<string> {
@@ -152,7 +167,7 @@ function App() {
     setState((prev) => ({ ...prev, activeSlotIndex: index }))
   }
 
-  // Clear invalid state: otherJob cannot equal windJob; remove jobs that no longer exist (e.g. Mime)
+  // Clear invalid state: otherJob cannot equal windJob; remove jobs that no longer exist; clear invalid slot abilities
   useEffect(() => {
     let hasInvalid = false
     const fixed = { ...selections }
@@ -160,11 +175,33 @@ function App() {
       const s = fixed[charId]
       let wind = s.windJob
       let other = s.otherJob
+      let slot1 = s.slotAbility1
+      let slot2 = s.slotAbility2
       if (wind && !findJobById(wind)) wind = null
       if (other && !findJobById(other)) other = null
       if (wind && other && wind === other) other = null
-      if (wind !== s.windJob || other !== s.otherJob) {
-        fixed[charId] = { windJob: wind, otherJob: other }
+      if (wind && other) {
+        const validIds = new Set(
+          getCombinedSlotAbilities(wind, other).map((a) => a.id)
+        )
+        if (slot1 && !validIds.has(slot1)) slot1 = null
+        if (slot2 && !validIds.has(slot2)) slot2 = null
+      } else {
+        slot1 = null
+        slot2 = null
+      }
+      if (
+        wind !== s.windJob ||
+        other !== s.otherJob ||
+        slot1 !== s.slotAbility1 ||
+        slot2 !== s.slotAbility2
+      ) {
+        fixed[charId] = {
+          windJob: wind,
+          otherJob: other,
+          slotAbility1: slot1,
+          slotAbility2: slot2,
+        }
         hasInvalid = true
       }
     }
@@ -179,6 +216,20 @@ function App() {
       [charId]: {
         ...prev[charId],
         [slot]: jobId,
+      },
+    }))
+  }
+
+  const setSlotAbility = (
+    charId: CharacterId,
+    slot: 'slotAbility1' | 'slotAbility2',
+    abilityId: string | null
+  ) => {
+    updateActiveSlotSelections((prev) => ({
+      ...prev,
+      [charId]: {
+        ...prev[charId],
+        [slot]: abilityId,
       },
     }))
   }
@@ -222,10 +273,10 @@ function App() {
     const otherShuffled = shuffle(otherPool)
     const otherPicks = otherShuffled.slice(0, 4)
     updateActiveSlotSelections(() => ({
-      bartz: { windJob: windPicks[0].id, otherJob: otherPicks[0].id },
-      lenna: { windJob: windPicks[1].id, otherJob: otherPicks[1].id },
-      galufKrile: { windJob: windPicks[2].id, otherJob: otherPicks[2].id },
-      faris: { windJob: windPicks[3].id, otherJob: otherPicks[3].id },
+      bartz: { ...emptySelection(), windJob: windPicks[0].id, otherJob: otherPicks[0].id },
+      lenna: { ...emptySelection(), windJob: windPicks[1].id, otherJob: otherPicks[1].id },
+      galufKrile: { ...emptySelection(), windJob: windPicks[2].id, otherJob: otherPicks[2].id },
+      faris: { ...emptySelection(), windJob: windPicks[3].id, otherJob: otherPicks[3].id },
     }))
   }
 
@@ -407,6 +458,70 @@ function App() {
                     ))}
                   </select>
                 </div>
+                {s.windJob && s.otherJob && (() => {
+                  const slotAbilities = getCombinedSlotAbilities(s.windJob, s.otherJob)
+                  if (slotAbilities.length === 0) return null
+                  const selected1 = slotAbilities.find((a) => a.id === s.slotAbility1)
+                  const selected2 = slotAbilities.find((a) => a.id === s.slotAbility2)
+                  return (
+                    <>
+                      <div className="slot">
+                        <label>Ability slot 1</label>
+                        <div className="slot-ability-row">
+                          <select
+                            value={s.slotAbility1 ?? ''}
+                            onChange={(e) =>
+                              setSlotAbility(charId, 'slotAbility1', e.target.value || null)
+                            }
+                          >
+                            <option value="">— Select —</option>
+                            {slotAbilities.map((a) => (
+                              <option key={a.id} value={a.id} title={a.description}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selected1 && (
+                            <span
+                              className="slot-ability-info"
+                              data-tooltip={selected1.description}
+                              aria-label="Ability info"
+                            >
+                              i
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                      <div className="slot">
+                        <label>Ability slot 2</label>
+                        <div className="slot-ability-row">
+                          <select
+                            value={s.slotAbility2 ?? ''}
+                            onChange={(e) =>
+                              setSlotAbility(charId, 'slotAbility2', e.target.value || null)
+                            }
+                          >
+                            <option value="">— Select —</option>
+                            {slotAbilities.map((a) => (
+                              <option key={a.id} value={a.id} title={a.description}>
+                                {a.name}
+                              </option>
+                            ))}
+                          </select>
+                          {selected2 && (
+                            <span
+                              className="slot-ability-info"
+                              data-tooltip={selected2.description}
+                              aria-label="Ability info"
+                            >
+                              i
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
               <div className="random-buttons">
                 <button

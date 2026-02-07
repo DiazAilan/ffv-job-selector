@@ -1,6 +1,8 @@
 export interface CharacterSelection {
   windJob: string | null
   otherJob: string | null
+  slotAbility1: string | null
+  slotAbility2: string | null
 }
 
 export interface SavedSelections {

@@ -379,6 +379,66 @@
     padding-top: 0.75rem;
     border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
+
+  .slot-ability-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+
+    select {
+      flex: 1;
+    }
+  }
+
+  .slot-ability-info {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    border: 1px solid currentColor;
+    border-radius: 50%;
+    color: rgba(232, 212, 160, 0.8);
+    cursor: help;
+    flex-shrink: 0;
+
+    &:hover {
+      color: rgba(232, 212, 160, 1);
+    }
+
+    &::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      right: calc(100% + 8px);
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 0.4rem 0.6rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      line-height: 1.3;
+      white-space: normal;
+      min-width: 100px;
+      max-width: 220px;
+      color: #fff;
+      background: rgba(0, 0, 0, 0.95);
+      border: 1px solid rgba(232, 212, 160, 0.4);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+      transition: opacity 0.15s, visibility 0.15s;
+      z-index: 10;
+    }
+
+    &:hover::after {
+      opacity: 1;
+      visibility: visible;
+    }
+  }
 }
 
 .job-tag {
