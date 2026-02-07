@@ -174,11 +174,35 @@
   }
 
   .combo-title {
-    margin: 0 0 0.75rem;
+    margin: 0 0 0.5rem;
     font-size: 0.8rem;
     font-weight: 600;
     color: #e8d4a0;
     font-style: italic;
+  }
+
+  .mastery-stats {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.6rem;
+    margin-bottom: 0.75rem;
+    font-size: 0.7rem;
+    color: rgba(255, 255, 255, 0.7);
+
+    .mastery-label {
+      width: 100%;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: rgba(255, 255, 255, 0.5);
+    }
+
+    .stat {
+      padding: 0.15rem 0.4rem;
+      background: rgba(255, 255, 255, 0.08);
+      border-radius: 4px;
+      font-weight: 600;
+    }
   }
 
   .random-buttons {

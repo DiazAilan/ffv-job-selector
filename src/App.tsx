@@ -6,6 +6,7 @@ import {
   findJobById,
 } from './data/jobs'
 import { getJobCombo } from './data/jobCombos'
+import { getMasteryStats } from './data/jobStats'
 import { mixHexColors } from './utils/color'
 import {
   type SavedSelections,
@@ -279,14 +280,26 @@ function App() {
                 </button>
               </div>
               {combo && windJob && otherJob && (
-                <p
-                  className="combo-title"
-                  style={{
-                    color: mixHexColors(windJob.color, otherJob.color),
-                  }}
-                >
-                  {combo.emoji} {combo.title}
-                </p>
+                <>
+                  <p
+                    className="combo-title"
+                    style={{
+                      color: mixHexColors(windJob.color, otherJob.color),
+                    }}
+                  >
+                    {combo.emoji} {combo.title}
+                  </p>
+                  <div className="mastery-stats">
+                    <span className="mastery-label">Mastery bonus:</span>
+                    {Object.entries(getMasteryStats(windJob.id, otherJob.id)).map(
+                      ([stat, val]) => (
+                        <span key={stat} className="stat">
+                          {stat.toUpperCase()} {val >= 0 ? '+' : ''}{val}
+                        </span>
+                      )
+                    )}
+                  </div>
+                </>
               )}
               <div className="slots">
                 <div className="slot">
