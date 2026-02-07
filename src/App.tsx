@@ -202,9 +202,19 @@ function App() {
     return ALL_JOBS.filter((j) => !used.has(j.id))
   }
 
-  const clearAll = () => updateActiveSlotSelections(() => JSON.parse(JSON.stringify(initialSelections)))
+  const clearAll = () => {
+    const hasAnySelection = CHARACTER_IDS.some(
+      (id) => selections[id].windJob || selections[id].otherJob
+    )
+    if (hasAnySelection && !window.confirm('Clear all job selections?')) return
+    updateActiveSlotSelections(() => JSON.parse(JSON.stringify(initialSelections)))
+  }
 
   const handleRandomAll = () => {
+    const hasAnySelection = CHARACTER_IDS.some(
+      (id) => selections[id].windJob || selections[id].otherJob
+    )
+    if (hasAnySelection && !window.confirm('Replace all job selections?')) return
     const windShuffled = shuffle(WIND_JOBS)
     const windPicks = windShuffled.slice(0, 4)
     const usedIds = new Set(windPicks.map((j) => j.id))
@@ -220,6 +230,9 @@ function App() {
   }
 
   const clearCharacter = (charId: CharacterId) => {
+    const s = selections[charId]
+    const hasSelection = s.windJob || s.otherJob
+    if (hasSelection && !window.confirm(`Clear ${CHARACTER_NAMES[charId]}'s job selections?`)) return
     updateActiveSlotSelections((prev) => ({
       ...prev,
       [charId]: emptySelection(),
