@@ -6,6 +6,7 @@ import {
   findJobById,
 } from './data/jobs'
 import { getJobComboTitle } from './data/jobCombos'
+import { mixHexColors } from './utils/color'
 import {
   type SavedSelections,
   type SaveSlot,
@@ -276,8 +277,15 @@ function App() {
                   Clear
                 </button>
               </div>
-              {s.windJob && s.otherJob && getJobComboTitle(s.windJob, s.otherJob) && (
-                <p className="combo-title">{getJobComboTitle(s.windJob, s.otherJob)}</p>
+              {s.windJob && s.otherJob && windJob && otherJob && getJobComboTitle(s.windJob, s.otherJob) && (
+                <p
+                  className="combo-title"
+                  style={{
+                    color: mixHexColors(windJob.color, otherJob.color),
+                  }}
+                >
+                  {getJobComboTitle(s.windJob, s.otherJob)}
+                </p>
               )}
               <div className="slots">
                 <div className="slot">
